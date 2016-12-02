@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fasterthanlime/zipfs/zipfs"
+	"github.com/fasterthanlime/go-fuse-itchfs/zipfs"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/itchio/go-itchio/itchfs"

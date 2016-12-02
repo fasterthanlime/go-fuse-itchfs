@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -29,6 +30,8 @@ func (f *ZipFile) Stat(out *fuse.Attr) {
 }
 
 func (f *ZipFile) Data() []byte {
+	log.Printf("Downloading %s...", f.Name)
+
 	zf := (*f)
 	rc, err := zf.Open()
 	if err != nil {
