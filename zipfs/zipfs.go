@@ -72,22 +72,6 @@ func NewZipTree(name string) (map[string]MemFile, error) {
 
 func NewArchiveFileSystem(name string) (root nodefs.Node, err error) {
 	var files map[string]MemFile
-	// switch {
-	// case strings.HasSuffix(name, ".zip"):
-	// 	files, err = NewZipTree(name)
-	// case strings.HasSuffix(name, ".tar.gz"):
-	// 	files, err = NewTarCompressedTree(name, "gz")
-	// case strings.HasSuffix(name, ".tar.bz2"):
-	// 	files, err = NewTarCompressedTree(name, "bz2")
-	// case strings.HasSuffix(name, ".tar"):
-	// 	f, err := os.Open(name)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	files = NewTarTree(f)
-	// default:
-	// 	return nil, fmt.Errorf("unknown archive format %q", name)
-	// }
 
 	files, err = NewZipTree(name)
 
