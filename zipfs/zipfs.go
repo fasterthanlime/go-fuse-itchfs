@@ -12,38 +12,48 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+	"sync"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/itchio/wharf/eos"
 )
 
 type ZipFile struct {
-	*zip.File
+	zipFile *zip.File
+	cache   []byte
+	lock    sync.Mutex
 }
 
 func (f *ZipFile) Stat(out *fuse.Attr) {
 	// TODO - do something intelligent with timestamps.
 	// out.Mode = fuse.S_IFREG | 0444
-	out.Mode = fuse.S_IFREG | uint32(f.Mode()&0777) | 0666
-	out.Size = uint64(f.File.UncompressedSize)
+	out.Mode = fuse.S_IFREG | uint32(f.zipFile.Mode()&0777) | 0666
+	out.Size = uint64(f.zipFile.UncompressedSize)
 }
 
 func (f *ZipFile) Data() []byte {
-	log.Printf("Downloading %s...", f.Name)
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
-	zf := (*f)
-	rc, err := zf.Open()
-	if err != nil {
-		panic(err)
-	}
-	dest := bytes.NewBuffer(make([]byte, 0, f.UncompressedSize))
+	if f.cache == nil {
+		log.Printf("Downloading %s (%s, %s compressed)...", f.zipFile.Name, humanize.IBytes(f.zipFile.UncompressedSize64), humanize.IBytes(f.zipFile.CompressedSize64))
 
-	_, err = io.CopyN(dest, rc, int64(f.UncompressedSize))
-	if err != nil {
-		panic(err)
+		rc, err := f.zipFile.Open()
+		if err != nil {
+			panic(err)
+		}
+		dest := bytes.NewBuffer(make([]byte, 0, f.zipFile.UncompressedSize))
+
+		_, err = io.CopyN(dest, rc, int64(f.zipFile.UncompressedSize))
+		if err != nil {
+			panic(err)
+		}
+		f.cache = dest.Bytes()
 	}
-	return dest.Bytes()
+
+	return f.cache
 }
 
 // NewZipTree creates a new file-system for the zip file named name.
@@ -67,7 +77,9 @@ func NewZipTree(name string) (map[string]MemFile, error) {
 		}
 		n := filepath.Clean(f.Name)
 
-		zf := &ZipFile{f}
+		zf := &ZipFile{
+			zipFile: f,
+		}
 		out[n] = zf
 	}
 	return out, nil

@@ -6,7 +6,6 @@ package zipfs
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/hanwen/go-fuse/fuse"
@@ -98,13 +97,8 @@ func (n *memNode) OpenDir(context *fuse.Context) (stream []fuse.DirEntry, code f
 }
 
 func (n *memNode) Open(flags uint32, context *fuse.Context) (fuseFile nodefs.File, code fuse.Status) {
-	var attr fuse.Attr
-	n.file.Stat(&attr)
-	log.Printf("Opening %x %p", flags, n)
-
 	if flags&fuse.O_ANYWRITE != 0 {
-		log.Printf("Redirecting write to /dev/null %s", attr.String())
-		// return nil, fuse.EPERM
+		// redirect write to /dev/null
 		return nodefs.NewDevNullFile(), fuse.OK
 	}
 
@@ -125,13 +119,12 @@ func (n *memNode) GetAttr(out *fuse.Attr, file nodefs.File, context *fuse.Contex
 }
 
 func (n *memNode) Unlink(name string, context *fuse.Context) (code fuse.Status) {
-	log.Printf("No-op unlink %s", name)
+	// don't honor unlinks
 	return fuse.OK
 }
 
 func (n *memNode) Create(name string, flags uint32, mode uint32, context *fuse.Context) (nodefs.File, *nodefs.Inode, fuse.Status) {
-	log.Printf("/dev/null create %s", name)
-
+	// create inodes, redirect writes nowhere
 	node := nodefs.NewDefaultNode()
 	inode := n.fs.root.Inode().NewChild(name, false, node)
 

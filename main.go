@@ -106,6 +106,8 @@ func main() {
 		cmd.Start()
 	}
 
+	log.Printf("Serving at %s", flag.Arg(0))
+
 	state.Serve()
 	if memProfFile != nil {
 		pprof.WriteHeapProfile(memProfFile)
